@@ -2,6 +2,7 @@ from __future__ import print_function
 import sys
 import os
 import itertools
+from collections import Counter
 
 class Cell:
   def __init__(self):
@@ -394,6 +395,64 @@ class Board:
     print("Scanned partials {counter} times.".format(counter=counter))
     return counter-1
 
+  def xwing(self):
+    """Search for two columns that contain the same number in the same two rows exclusively. Eliminate this number from options in all other columns in those rows."""
+    # Annotate each column by { <opt_val>: [list of rows], ...}, any opt_val having exactly two rows is a candidate
+    # 
+    def scan(): 
+      # opt_locations holds a list of allowed locations for each option value
+      # we can search each list for column or row exclusive pairs
+      opt_locations = { k: [] for k in range(1,10) }
+      for opt_val in range(1,10):
+        for col in range(0,9):
+          for row in range(0,9):
+            if opt_val in self.rows[row][col].options:
+              opt_locations[opt_val].append((row,col))
+      # opt_locations is now populated
+      row_doubles = []
+      col_doubles = []
+      clean = True
+      for opt_val in range(1,10):
+        row_grp = Counter( [ x[0] for x in opt_locations[opt_val] ] )
+        row_doubles = [ x[0] for x in row_grp.items() if x[1] == 2 ] # (row, count) tuples only if count == 2
+        col_grp = Counter( [ x[1] for x in opt_locations[opt_val] ] )
+        col_doubles = [ x[0] for x in col_grp.items() if x[1] == 2 ] # (col, count) tuples only if count == 2
+        #print("option:{} rowdbls:{} coldbls:{}".format(opt_val,str(row_doubles),str(col_doubles)))
+        for row_combo in itertools.combinations(row_doubles, 2):
+          top_row, bottom_row = row_combo
+          top_row_cols = [ loc[1] for loc in opt_locations[opt_val] if loc[0] == top_row ]
+          bottom_row_cols = [ loc[1] for loc in opt_locations[opt_val] if loc[0] == bottom_row ]
+          if top_row_cols == bottom_row_cols:
+            print("Found X-Wing for {} at {} {} and {} {}".format(opt_val,
+              str((top_row,top_row_cols[0])),
+              str((top_row,top_row_cols[1])),
+              str((bottom_row,bottom_row_cols[0])),
+              str((bottom_row,bottom_row_cols[1]))
+              ))
+            for urow in range(0,9):
+              for ucol in top_row_cols:
+                if urow not in [top_row, bottom_row]: # don't delete the XWing corners
+                  try:
+                    self.rows[urow][ucol].options.remove(opt_val)
+                    clean = False
+                    print("Removed {} from options in cell {}, {}".format(opt_val,urow,ucol))
+                  except KeyError:
+                    pass
+          if not clean:
+            break
+        if not clean:
+          break
+      return clean
+
+    counter = 1
+    while True:
+      clean = scan()
+      if clean:
+        break
+      counter += 1
+    print("Scanned XWing {counter} times.".format(counter=counter))
+    return counter-1
+
   def scan(self):
     for row in range(0,9):
       for col in range(0,9):
@@ -482,6 +541,7 @@ if __name__ == "__main__":
       counter += board.col_tuples()
       counter += board.square_tuples()
       counter += board.partials()
+      counter += board.xwing()
       if counter == 0:
         print("Completed all scans with no changes, giving up")
         break
@@ -490,7 +550,6 @@ if __name__ == "__main__":
   #solve()
   board.display()
   board.large_display()
-  board.partials()
 
 
   """ Write an "option_remove(option_value,row=None,col=None,exclude=[])" function
