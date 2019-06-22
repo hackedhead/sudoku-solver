@@ -11,13 +11,6 @@ def test_assigned_cell_has_no_options():
     assert cell.options == set()
     assert cell.value == 8
 
-
-def test_cell_remove_penultimate_option_sets_value():
-    cell = Cell()
-    for i in range(1,9):
-        cell.remove_option(i)
-    assert cell.value == 9
-
 def test_setting_cell_value_remove_options():
     cell = Cell()
     cell.set_value(7)

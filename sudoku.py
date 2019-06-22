@@ -12,8 +12,6 @@ class Cell:
 
   def remove_option(self, opt_value):
       self.options.remove(opt_value)
-      if len(self.options) == 1:
-          self.value = self.options.pop()
 
   def set_value(self, value):
       self.value = value
