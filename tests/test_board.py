@@ -10,3 +10,19 @@ def test_board_has_81_cells():
         assert board[0][9]
     with pytest.raises(KeyError):
         assert board[9][0]
+
+def test_board_errors_loading_string_too_short():
+    with pytest.raises(ValueError):
+        assert Board("091823098")
+
+def test_board_errors_loading_string_too_long():
+    with pytest.raises(ValueError):
+        assert Board(82*"X")
+
+def test_board_errors_loading_string_invalid_character():
+    with pytest.raises(ValueError):
+        assert Board(80*"1" + "A")
+
+def test_board_errors_loading_string_invalid_numeral():
+    with pytest.raises(ValueError):
+        assert Board(80*"1" + "0")
