@@ -2,6 +2,7 @@ from __future__ import print_function
 import sys
 import os
 import itertools
+import re
 from collections import Counter
 
 class Cell:
@@ -42,10 +43,22 @@ class Solver:
             if i != y:
                 self.board[x][i].remove_option(value)
 
-
 class Board:
-    def __init__(self):
+    def __init__(self, board_string = None):
         self.data = {k:{j:Cell() for j in range(0,9)} for k in range(0,9)}
+        if board_string is not None:
+            pattern = re.compile("[1-9X]{81}")
+            if not pattern.fullmatch(board_string):
+                raise ValueError
+            else:
+                for x in range(0,9):
+                    row_offset = x * 9
+                    row_string = board_string[row_offset:row_offset+9]
+                    for y, char in enumerate(row_string):
+                        if char is not "X":
+                            self.data[x][y].set_value(int(char))
+
+
 
     def __getitem__(self, key):
         return self.data[key]

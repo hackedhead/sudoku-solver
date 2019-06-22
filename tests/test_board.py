@@ -26,3 +26,10 @@ def test_board_errors_loading_string_invalid_character():
 def test_board_errors_loading_string_invalid_numeral():
     with pytest.raises(ValueError):
         assert Board(80*"1" + "0")
+
+def test_valid_string_becomes_board():
+    board = Board("123456789" + ("X" * 9) * 8)
+    assert board[0][2].value == 3
+    assert board[0][8].value == 9
+    assert board[1][5].value == None
+
