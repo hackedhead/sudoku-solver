@@ -24,11 +24,27 @@ class Cell:
 
 
 class Solver:
-    def __init__(self):
-        self._build_board()
-
-    def _build_board(self):
-        self.board = Board()
+    @staticmethod
+    def solve(board):
+        print(board)
+        counter = 0
+        for px in range(0,9):
+            for py in range(0,9):
+                if len(board[px][py].options) > 0:
+                    print("Checking cell ({px},{py}: options: {options})".format(px=px, py=py, options=board[px][py].options))
+                    counter += 1
+                    options = list(board[px][py].options)
+                    for each in options:
+                        try:
+                            newboard = Board(board.emit())
+                            newboard.set((px,py), each)
+                        except AttributeError as err:
+                            print(err)
+                            print("Failed to assign {each} to cell ({px},{py})".format(each=each, px=px, py=py))
+                            continue
+                        Solver.solve(newboard)
+        if counter == 0:
+            print(Board)
 
 
 class Board:
@@ -68,6 +84,14 @@ class Board:
     def __setitem__(self, key, value):
         self.data[key] = value
 
+    def emit(self):
+        output_string = ""
+        for x in range(0,9):
+            for y in range(0,9):
+                output_string += "X" if self.data[x][y].value is None else str(self.data[x][y].value)
+        return output_string
+
+
     def __str__(self):
         cyan_vertical_pipe = "\x1b[1;36m|\x1b[0m"
         cyan_horizontal_pipe = "\x1b[1;36m-\x1b[0m"
@@ -90,3 +114,9 @@ class Loader:
             for line in input_file:
                 input_string += line.strip("\r\n")
         return Board(input_string)
+
+
+if __name__ == "__main__":
+    board = Loader.create_board_from_file("puzzle93.txt")
+    print(board)
+    Solver.solve(board)
