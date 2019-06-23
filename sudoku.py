@@ -83,7 +83,8 @@ class Board:
         return output_string
 
 class Loader:
-    def create_board_from_file(self, filename):
+    @staticmethod
+    def create_board_from_file(filename):
         input_string = ""
         with open(filename, "r") as input_file:
             for line in input_file:
