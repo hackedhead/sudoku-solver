@@ -24,11 +24,39 @@ class Cell:
 
 
 class Solver:
-    def __init__(self):
-        self._build_board()
-
-    def _build_board(self):
-        self.board = Board()
+    @staticmethod
+    def solve(board):
+        print(board)
+        best_cell = None
+        best_count = None
+        for px in range(0,9):
+            for py in range(0,9):
+                opt_count = len(board[px][py].options)
+                if opt_count > 0:
+                    if best_count is None or opt_count < best_count:
+                        best_cell = (px,py)
+                        best_count = opt_count
+        if best_count is None:
+            print(board)
+            print("Complete!")
+            return board
+        else:
+            px, py = best_cell
+            print("Attempting to assign into {cell}".format(cell=best_cell))
+            options = list(board[px][py].options)
+            for each in options:
+                try:
+                    newboard = Board(board.emit())
+                    newboard.set((px,py), each)
+                except AttributeError as err:
+                    print(err)
+                    continue
+                try:
+                    return Solver.solve(newboard)
+                except AttributeError as err:
+                    print(err)
+                    continue
+            raise AttributeError("Ran out of options")
 
 
 class Board:
@@ -53,8 +81,18 @@ class Board:
         self.data[x][y].set_value(value)
         # remove option for other cells in the row and column
         for i in range(0, 9):
-            self.data[i][y].remove_option(value)
-            self.data[x][i].remove_option(value)
+            try:
+                self.data[i][y].remove_option(value)
+            except AttributeError as err:
+                message = "Cell ({x},{y}): {err}".format(x=i,y=y,err=err)
+                print(message)
+                raise AttributeError(message)
+            try:
+                self.data[x][i].remove_option(value)
+            except AttributeError as err:
+                message = "Cell ({x},{y}): {err}".format(x=x,y=i,err=err)
+                print(message)
+                raise AttributeError(message)
         # remove option for other cells in square (3x3)
         xbase = x - (x % 3)
         ybase = y - (y % 3)
@@ -67,6 +105,14 @@ class Board:
 
     def __setitem__(self, key, value):
         self.data[key] = value
+
+    def emit(self):
+        output_string = ""
+        for x in range(0,9):
+            for y in range(0,9):
+                output_string += "X" if self.data[x][y].value is None else str(self.data[x][y].value)
+        return output_string
+
 
     def __str__(self):
         cyan_vertical_pipe = "\x1b[1;36m|\x1b[0m"
@@ -90,3 +136,9 @@ class Loader:
             for line in input_file:
                 input_string += line.strip("\r\n")
         return Board(input_string)
+
+
+if __name__ == "__main__":
+    board = Loader.create_board_from_file("puzzle93.txt")
+    print(board)
+    Solver.solve(board)
