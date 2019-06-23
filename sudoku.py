@@ -20,7 +20,7 @@ class Cell:
         if self.value is not None:
             return str(self.value)
         else:
-            return "X"
+            return "·"
 
 
 class Solver:
@@ -68,6 +68,19 @@ class Board:
     def __setitem__(self, key, value):
         self.data[key] = value
 
+    def __str__(self):
+        cyan_vertical_pipe = "\x1b[1;36m|\x1b[0m"
+        cyan_horizontal_pipe = "\x1b[1;36m-\x1b[0m"
+        output_string = ""
+        for x in range(0,9):
+            for y in range(0,9):
+                output_string += str(self.data[x][y]) + " "
+                if y in [2,5]:
+                    output_string += cyan_vertical_pipe + " "
+            output_string += "\n"
+            if x in [2,5]:
+                output_string += cyan_horizontal_pipe * (9*2+3) + "\n"
+        return output_string
 
 class Loader:
     def create_board_from_file(self, filename):
