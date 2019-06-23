@@ -11,7 +11,9 @@ class Cell:
     self.options = set() if value else set(range(1,10))
 
   def remove_option(self, opt_value):
-      self.options.remove(opt_value)
+      self.options.discard(opt_value)
+      if len(self.options) == 0 and self.value is None:
+          raise AttributeError("Cell has no remaining options")
 
   def set_value(self, value):
       self.value = value
