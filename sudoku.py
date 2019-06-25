@@ -1,40 +1,89 @@
 from __future__ import print_function
+import copy
 import re
+import time
 
 
 class Cell:
     def __init__(self, value=None):
         self.value = value
         self.options = set() if value else set(range(1, 10))
+        self.confidence = None
 
     def remove_option(self, opt_value):
         self.options.discard(opt_value)
         if len(self.options) == 0 and self.value is None:
             raise AttributeError("Cell has no remaining options")
 
-    def set_value(self, value):
+    def set_value(self, value, confidence=None):
         self.value = value
         self.options.clear()
+        self.confidence = confidence
 
     def __str__(self):
         if self.value is not None:
-            return str(self.value)
+            colors = {0: "\x1b[1;97m",  # bright white
+                      1: "\x1b[1;96m",  # bright cyan
+                      2: "\x1b[1;92m",  # bright green
+                      3: "\x1b[1;93m",  # bright yellow
+                      4: "\x1b[1;91m",  # bright red
+                      5: "\x1b[1;31m",  # red
+                      6: "\x1b[1;33m",  # yellow
+                      7: "\x1b[1;35m",  # magenta
+                     }
+            def get_color(confidence):
+                """
+                Confidence intervals are chosen based on picking
+                1 from 2,3,4 and then halving or thirding those numbers.
+                1/2 -> 0.5
+                1/3 -> 0.33
+                1/4 -> 0.25
+                1/2 -> 1/2 -> 0.25
+                1/2 -> 1/2 -> 1/2 -> 0.125
+                1/3 -> 1/3 -> 0.11
+                1/3 -> 1/3 -> 1/3 -> 0.05
+                1/3 -> 1/2 -> 0.13
+                1/3 -> 1/4 -> 0.08
+                etc
+                """
+                if confidence is None:
+                    return colors[0]
+                if confidence > 0.48:
+                    return colors[1]
+                elif confidence > 0.3:
+                    return colors[2]
+                elif confidence > 0.2:
+                    return colors[3]
+                elif confidence > 0.15:
+                    return colors[4]
+                elif confidence > 0.12:
+                    return colors[5]
+                elif confidence > 0.08:
+                    return colors[6]
+                else:
+                    return colors[7]
+
+            return ("{color}{value}{reset}"
+                        .format(color=get_color(self.confidence),
+                                value=str(self.value),
+                                reset="\x1b[0m"))
         else:
             return "·"
 
 
 class Solver:
     @staticmethod
-    def solve(board):
+    def solve(board, confidence):
+        time.sleep(0.05)
         print(board)
         best_cell = None
         best_count = None
-        for px in range(0,9):
-            for py in range(0,9):
+        for px in range(0, 9):
+            for py in range(0, 9):
                 opt_count = len(board[px][py].options)
                 if opt_count > 0:
                     if best_count is None or opt_count < best_count:
-                        best_cell = (px,py)
+                        best_cell = (px, py)
                         best_count = opt_count
         if best_count is None:
             print(board)
@@ -42,19 +91,20 @@ class Solver:
             return board
         else:
             px, py = best_cell
-            print("Attempting to assign into {cell}".format(cell=best_cell))
+            # print("Attempting to assign into {cell}".format(cell=best_cell))
             options = list(board[px][py].options)
-            for each in options:
+            for count, candidate_value in enumerate(options):
+                new_confidence = confidence/(len(options)-count)
                 try:
-                    newboard = Board(board.emit())
-                    newboard.set((px,py), each)
+                    newboard = copy.deepcopy(board)
+                    newboard.set((px, py), candidate_value, new_confidence)
                 except AttributeError as err:
-                    print(err)
+                    # print(err)
                     continue
                 try:
-                    return Solver.solve(newboard)
+                    return Solver.solve(newboard, new_confidence)
                 except AttributeError as err:
-                    print(err)
+                    # print(err)
                     continue
             raise AttributeError("Ran out of options")
 
@@ -74,24 +124,24 @@ class Board:
                         if char is not "X":
                             self.set((x, y), int(char))
 
-    def set(self, cell, value):
+    def set(self, cell, value, confidence=None):
         x, y = cell
         if value not in self.data[x][y].options:
             raise ValueError("{value} is not a valid option for Cell({x},{y})".format(x=x, y=y, value=value))
-        self.data[x][y].set_value(value)
+        self.data[x][y].set_value(value, confidence)
         # remove option for other cells in the row and column
         for i in range(0, 9):
             try:
                 self.data[i][y].remove_option(value)
             except AttributeError as err:
                 message = "Cell ({x},{y}): {err}".format(x=i,y=y,err=err)
-                print(message)
+                #print(message)
                 raise AttributeError(message)
             try:
                 self.data[x][i].remove_option(value)
             except AttributeError as err:
                 message = "Cell ({x},{y}): {err}".format(x=x,y=i,err=err)
-                print(message)
+                #print(message)
                 raise AttributeError(message)
         # remove option for other cells in square (3x3)
         xbase = x - (x % 3)
@@ -141,4 +191,4 @@ class Loader:
 if __name__ == "__main__":
     board = Loader.create_board_from_file("puzzle93.txt")
     print(board)
-    Solver.solve(board)
+    Solver.solve(board, 1)
