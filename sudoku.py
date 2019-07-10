@@ -3,6 +3,7 @@ import copy
 import re
 import time
 import sys
+import argparse
 
 
 class Cell:
@@ -191,6 +192,9 @@ class Loader:
 
 
 if __name__ == "__main__":
-    board = Loader.create_board_from_file("puzzle93.txt")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filename", help="the filename of the puzzle to solve")
+    args = parser.parse_args()
+    board = Loader.create_board_from_file(args.filename)
     print(board)
     Solver.solve(board, 1)
