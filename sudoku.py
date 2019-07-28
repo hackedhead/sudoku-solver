@@ -4,6 +4,8 @@ import re
 import time
 import sys
 import argparse
+import datetime
+import logging
 
 
 class Cell:
@@ -199,6 +201,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="the filename of the puzzle to solve")
     args = parser.parse_args()
+    logging.basicConfig(filename=f"{args.filename}-{datetime.datetime.now().isoformat()}.log",
+            level=logging.DEBUG)
+    logger = logging.getLogger("sudoku")
+    logger.info(f"Solving board from file: {args.filename}")
     board = Loader.create_board_from_file(args.filename)
     render_board(board)
     Solver.solve(board, 1)
