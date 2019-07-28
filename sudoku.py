@@ -32,7 +32,8 @@ class Cell:
                       5: "\x1b[1;31m",  # red
                       6: "\x1b[1;33m",  # yellow
                       7: "\x1b[1;35m",  # magenta
-                     }
+                      }
+
             def get_color(confidence):
                 """
                 Confidence intervals are chosen based on picking
@@ -50,15 +51,15 @@ class Cell:
                 """
                 if confidence is None:
                     return colors[0]
-                if confidence > 0.5: # known
+                if confidence > 0.5:  # known
                     return colors[1]
-                elif confidence > 0.33: # 1/2
+                elif confidence > 0.33:  # 1/2
                     return colors[2]
-                elif confidence > 0.25: # 1/3
+                elif confidence > 0.25:  # 1/3
                     return colors[3]
-                elif confidence > 0.33/2: # 1/4
+                elif confidence > 0.33/2:  # 1/4
                     return colors[4]
-                elif confidence > 0.125: # 
+                elif confidence > 0.125:
                     return colors[5]
                 elif confidence > 0.08:
                     return colors[6]
@@ -66,9 +67,9 @@ class Cell:
                     return colors[7]
 
             return ("{color}{value}{reset}"
-                        .format(color=get_color(self.confidence),
-                                value=str(self.value),
-                                reset="\x1b[0m"))
+                    .format(color=get_color(self.confidence),
+                            value=str(self.value),
+                            reset="\x1b[0m"))
         else:
             return "·"
 
@@ -137,14 +138,14 @@ class Board:
             try:
                 self.data[i][y].remove_option(value)
             except AttributeError as err:
-                message = "Cell ({x},{y}): {err}".format(x=i,y=y,err=err)
-                #print(message)
+                message = "Cell ({x},{y}): {err}".format(x=i, y=y, err=err)
+                # print(message)
                 raise AttributeError(message)
             try:
                 self.data[x][i].remove_option(value)
             except AttributeError as err:
-                message = "Cell ({x},{y}): {err}".format(x=x,y=i,err=err)
-                #print(message)
+                message = "Cell ({x},{y}): {err}".format(x=x, y=i, err=err)
+                # print(message)
                 raise AttributeError(message)
         # remove option for other cells in square (3x3)
         xbase = x - (x % 3)
@@ -161,25 +162,25 @@ class Board:
 
     def emit(self):
         output_string = ""
-        for x in range(0,9):
-            for y in range(0,9):
+        for x in range(0, 9):
+            for y in range(0, 9):
                 output_string += "X" if self.data[x][y].value is None else str(self.data[x][y].value)
         return output_string
-
 
     def __str__(self):
         cyan_vertical_pipe = "\x1b[1;36m|\x1b[0m"
         cyan_horizontal_pipe = "\x1b[1;36m-\x1b[0m"
         output_string = ""
-        for x in range(0,9):
-            for y in range(0,9):
+        for x in range(0, 9):
+            for y in range(0, 9):
                 output_string += str(self.data[x][y]) + " "
-                if y in [2,5]:
+                if y in [2, 5]:
                     output_string += cyan_vertical_pipe + " "
             output_string += "\n"
-            if x in [2,5]:
+            if x in [2, 5]:
                 output_string += cyan_horizontal_pipe * (9*2+3) + "\n"
         return output_string
+
 
 class Loader:
     @staticmethod
