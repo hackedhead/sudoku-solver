@@ -23,62 +23,14 @@ class Cell:
         self.confidence = confidence
 
     def __str__(self):
-        if self.value is not None:
-            colors = {0: "\x1b[1;97m",  # bright white
-                      1: "\x1b[1;96m",  # bright cyan
-                      2: "\x1b[1;92m",  # bright green
-                      3: "\x1b[1;93m",  # bright yellow
-                      4: "\x1b[1;91m",  # bright red
-                      5: "\x1b[1;31m",  # red
-                      6: "\x1b[1;33m",  # yellow
-                      7: "\x1b[1;35m",  # magenta
-                      }
-
-            def get_color(confidence):
-                """
-                Confidence intervals are chosen based on picking
-                1 from 2,3,4 and then halving or thirding those numbers.
-                1/2 -> 0.5
-                1/3 -> 0.33
-                1/4 -> 0.25
-                1/2 -> 1/2 -> 0.25
-                1/2 -> 1/2 -> 1/2 -> 0.125
-                1/3 -> 1/3 -> 0.11
-                1/3 -> 1/3 -> 1/3 -> 0.05
-                1/3 -> 1/2 -> 0.13
-                1/3 -> 1/4 -> 0.08
-                etc
-                """
-                if confidence is None:
-                    return colors[0]
-                if confidence > 0.5:  # known
-                    return colors[1]
-                elif confidence > 0.33:  # 1/2
-                    return colors[2]
-                elif confidence > 0.25:  # 1/3
-                    return colors[3]
-                elif confidence > 0.33/2:  # 1/4
-                    return colors[4]
-                elif confidence > 0.125:
-                    return colors[5]
-                elif confidence > 0.08:
-                    return colors[6]
-                else:
-                    return colors[7]
-
-            return ("{color}{value}{reset}"
-                    .format(color=get_color(self.confidence),
-                            value=str(self.value),
-                            reset="\x1b[0m"))
-        else:
-            return "·"
+        pass
 
 
 class Solver:
     @staticmethod
     def solve(board, confidence):
         time.sleep(0.08)
-        print(board)
+        render_board(board)
         sys.stdout.flush()
         best_cell = None
         best_count = None
@@ -90,7 +42,7 @@ class Solver:
                         best_cell = (px, py)
                         best_count = opt_count
         if best_count is None:
-            print(board)
+            render_board(board)
             print("Complete!")
             return board
         else:
@@ -167,20 +119,6 @@ class Board:
                 output_string += "X" if self.data[x][y].value is None else str(self.data[x][y].value)
         return output_string
 
-    def __str__(self):
-        cyan_vertical_pipe = "\x1b[1;36m|\x1b[0m"
-        cyan_horizontal_pipe = "\x1b[1;36m-\x1b[0m"
-        output_string = ""
-        for x in range(0, 9):
-            for y in range(0, 9):
-                output_string += str(self.data[x][y]) + " "
-                if y in [2, 5]:
-                    output_string += cyan_vertical_pipe + " "
-            output_string += "\n"
-            if x in [2, 5]:
-                output_string += cyan_horizontal_pipe * (9*2+3) + "\n"
-        return output_string
-
 
 class Loader:
     @staticmethod
@@ -191,11 +129,76 @@ class Loader:
                 input_string += line.strip("\r\n")
         return Board(input_string)
 
+def render_board(board):
+    def render_cell(cell):
+        if cell.value is not None:
+            colors = {0: "\x1b[1;97m",  # bright white
+                      1: "\x1b[1;96m",  # bright cyan
+                      2: "\x1b[1;92m",  # bright green
+                      3: "\x1b[1;93m",  # bright yellow
+                      4: "\x1b[1;91m",  # bright red
+                      5: "\x1b[1;31m",  # red
+                      6: "\x1b[1;33m",  # yellow
+                      7: "\x1b[1;35m",  # magenta
+                      }
+
+            def get_color(confidence):
+                """
+                Confidence intervals are chosen based on picking
+                1 from 2,3,4 and then halving or thirding those numbers.
+                1/2 -> 0.5
+                1/3 -> 0.33
+                1/4 -> 0.25
+                1/2 -> 1/2 -> 0.25
+                1/2 -> 1/2 -> 1/2 -> 0.125
+                1/3 -> 1/3 -> 0.11
+                1/3 -> 1/3 -> 1/3 -> 0.05
+                1/3 -> 1/2 -> 0.13
+                1/3 -> 1/4 -> 0.08
+                etc
+                """
+                if confidence is None:
+                    return colors[0]
+                if confidence > 0.5:  # known
+                    return colors[1]
+                elif confidence > 0.33:  # 1/2
+                    return colors[2]
+                elif confidence > 0.25:  # 1/3
+                    return colors[3]
+                elif confidence > 0.33/2:  # 1/4
+                    return colors[4]
+                elif confidence > 0.125:
+                    return colors[5]
+                elif confidence > 0.08:
+                    return colors[6]
+                else:
+                    return colors[7]
+
+            return ("{color}{value}{reset}"
+                    .format(color=get_color(cell.confidence),
+                            value=str(cell.value),
+                            reset="\x1b[0m"))
+        else:
+            return "·"
+
+    cyan_vertical_pipe = "\x1b[1;36m|\x1b[0m"
+    cyan_horizontal_pipe = "\x1b[1;36m-\x1b[0m"
+    output_string = ""
+    for x in range(0, 9):
+        for y in range(0, 9):
+            output_string += render_cell(board[x][y]) + " "
+            if y in [2, 5]:
+                output_string += cyan_vertical_pipe + " "
+        output_string += "\n"
+        if x in [2, 5]:
+            output_string += cyan_horizontal_pipe * (9*2+3) + "\n"
+    print(output_string)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="the filename of the puzzle to solve")
     args = parser.parse_args()
     board = Loader.create_board_from_file(args.filename)
-    print(board)
+    render_board(board)
     Solver.solve(board, 1)
